@@ -1,0 +1,140 @@
+# =========================
+# Python basics
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.pyo
+*.pdb
+
+# Bytecode & cache
+*.pickle
+*.pkl
+*.joblib
+*.cache
+
+# =========================
+# Virtual environments
+# =========================
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+*.ipynb
+
+# =========================
+# Logs & runtime
+# =========================
+*.log
+logs/
+tmp/
+temp/
+*.out
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+*.env
+
+# =========================
+# Data files (VERY IMPORTANT for RAG)
+# =========================
+data/
+datasets/
+uploads/
+raw_docs/
+*.pdf
+*.docx
+*.txt
+*.csv
+
+# =========================
+# Embeddings & Vector DB
+# =========================
+qdrant_storage/
+qdrant_data/
+qdrant_snapshots/
+storage/
+vector_store/
+faiss_index/
+*.faiss
+*.index
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Model weights / local LLM
+# =========================
+models/
+checkpoints/
+weights/
+*.bin
+*.gguf
+*.safetensors
+*.pt
+*.onnx
+
+# Ollama / LLM cache
+.ollama/
+ollama_models/
+
+# =========================
+# RAG experiment outputs
+# =========================
+metrics_outputs/
+experiments/
+runs/
+results/
+plots/
+*.jsonl
+
+# =========================
+# Build & packaging
+# =========================
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+pip-wheel-metadata/
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Testing & coverage
+# =========================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# =========================
+# Docker (optional)
+# =========================
+docker_data/
+docker_volumes/
