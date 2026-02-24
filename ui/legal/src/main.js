@@ -322,8 +322,7 @@ const API_URL = "http://127.0.0.1:8000/rag"
 document.querySelector('#app').innerHTML = `
   <div class="page">
     <div class="header">
-      <div class="title">Local RAG Chat</div>
-      <div class="subtitle">FastAPI + Qdrant + Ollama</div>
+      <div class="title">LexQuery</div>
     </div>
 
     <div id="chat" class="chat"></div>
