@@ -1,0 +1,42 @@
+{
+  "settings": {
+    "queries": "/Users/gourav/Developer/python/GenAi/BTP/evaluate/queries.txt",
+    "topk": 5,
+    "max_context_chars": 12000,
+    "outdir": "evaluate/rag_mode_outputs",
+    "with_answers": false,
+    "temperature": 0.2
+  },
+  "modes": [
+    "vector",
+    "pageIndex"
+  ],
+  "per_mode": {
+    "vector": {
+      "avg_latency_ms": 77.05,
+      "avg_margin_top1_top2": 0.014828790500000012,
+      "avg_gap_top1_topk": 0.028219023500000003,
+      "avg_unique_sources": 3.1,
+      "avg_context_chars": 9166.15,
+      "avg_relevance_score": 0.0,
+      "avg_groundedness_score": 0.0,
+      "avg_completeness_score": 0.0
+    },
+    "pageIndex": {
+      "avg_latency_ms": 27.4,
+      "avg_margin_top1_top2": 0.9880628015037075,
+      "avg_gap_top1_topk": 3.872703785284466,
+      "avg_unique_sources": 3.6,
+      "avg_context_chars": 8883.75,
+      "avg_relevance_score": 0.0,
+      "avg_groundedness_score": 0.0,
+      "avg_completeness_score": 0.0
+    }
+  },
+  "pairwise": {
+    "vector vs pageIndex": {
+      "avg_overlap_at_k": 0.11000000000000001,
+      "avg_jaccard_at_k": 0.08263888888888889
+    }
+  }
+}

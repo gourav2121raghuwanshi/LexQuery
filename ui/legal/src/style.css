@@ -84,6 +84,36 @@ body{
 .subtitle{
   font-size:12px;
   color:var(--muted);
+  margin-top:6px;
+}
+
+.toolbar{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding:14px 22px;
+  border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+}
+
+.field{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.checkbox-field input{
+  accent-color:#5aa2ff;
+}
+
+select{
+  border-radius:12px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.02);
+  border:1px solid var(--border);
+  color:var(--text);
 }
 
 /* ===== CHAT AREA ===== */
@@ -182,6 +212,12 @@ body{
   border-color:rgba(90,162,255,.4);
 }
 
+.citation-link{
+  display:block;
+  color:inherit;
+  text-decoration:none;
+}
+
 .badge{
   padding:3px 8px;
   border-radius:999px;
@@ -198,6 +234,55 @@ body{
 .cite-preview{
   margin-top:4px;
   font-size:13px;
+}
+
+.cite-open{
+  margin-top:8px;
+  color:#8bc1ff;
+  font-size:12px;
+  font-weight:700;
+}
+
+.review-card{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:rgba(90,162,255,0.08);
+}
+
+.review-card summary{
+  cursor:pointer;
+  color:#d9ebff;
+  font-size:13px;
+}
+
+.review-round{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+
+.review-line{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.review-verdict{
+  text-transform:uppercase;
+  font-size:11px;
+  letter-spacing:.5px;
+}
+
+.review-verdict.pass{color:#86efac}
+.review-verdict.retry{color:#fcd34d}
+.review-verdict.error{color:#fca5a5}
+
+.review-small{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--muted);
 }
 
 /* ===== COMPOSER ===== */

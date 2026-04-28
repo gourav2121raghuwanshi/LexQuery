@@ -1,53 +1,93 @@
 """
-FastAPI RAG server:
-- Embeds query via Ollama (nomic-embed-text)
-- Retrieves top-k from Qdrant
-- Sends context + query to Ollama chat (qwen2.5:7b)
-- Returns answer + citations
-
-http://127.0.0.1:8000/docs
-http://127.0.0.1:8000/health
-Prereqs:
-  pip install fastapi uvicorn httpx qdrant-client
+FastAPI RAG server with:
+- vector retrieval via Qdrant
+- vectorless pageIndex retrieval via SQLite FTS5
+- LLM answer review loop with query rewrite retries
+- clickable PDF citations
 
 Run:
   uvicorn make_call_to_fine_tuned_llm:app --host 127.0.0.1 --port 8000 --reload
-
-Test:
-  curl -X POST http://127.0.0.1:8000/rag \
-    -H "Content-Type: application/json" \
-    -d '{"query":"What are Fundamental Rights in the Indian Constitution?","top_k":5}'
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+import json
+import logging
+import os
+import re
+from typing import Any, Dict, List, Literal, Optional
+from urllib.parse import quote
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from qdrant_client import QdrantClient
-from fastapi.middleware.cors import CORSMiddleware
+
+from lexical_index import connect_index, initialize_index, search_lexical
+
 
 # -----------------------------
 # Config
 # -----------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+LEXICAL_DB_PATH = os.path.join(BASE_DIR, "lexical_chunks.db")
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+
+
+def load_env_file(path: str) -> None:
+    """Load KEY=VALUE pairs from a local .env file if present."""
+    if not os.path.exists(path):
+        return
+    with open(path, "r", encoding="utf-8") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+
+load_env_file(ENV_PATH)
+
 OLLAMA_CHAT_URL = "http://127.0.0.1:11434/api/chat"
 OLLAMA_EMBED_URL = "http://127.0.0.1:11434/api/embeddings"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
 LLM_MODEL = "qwen2.5:7b"
+JUDGE_MODEL = "gemini-2.5-flash"
+REWRITE_MODEL = "gemini-2.5-flash"
 EMBED_MODEL = "nomic-embed-text"
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "").strip()
 
 QDRANT_URL = "http://127.0.0.1:6333"
 COLLECTION = "btp_docs"
 
 DEFAULT_TOP_K = 5
 DEFAULT_TIMEOUT = 250
+REVIEW_THRESHOLD = 2
+
+
+# -----------------------------
+# Logging
+# -----------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+logger = logging.getLogger("rag.api")
+
 
 # -----------------------------
 # FastAPI app
 # -----------------------------
-app = FastAPI(title="Local RAG API (Ollama + Qdrant)")
+app = FastAPI(title="Local RAG API (Ollama + Qdrant + pageIndex Search)")
+app.mount("/documents", StaticFiles(directory=DATA_DIR), name="documents")
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,36 +96,65 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 class RagRequest(BaseModel):
     query: str = Field(..., min_length=1, description="User question")
     top_k: int = Field(DEFAULT_TOP_K, ge=1, le=20, description="How many chunks to retrieve")
     max_context_chars: int = Field(12000, ge=1000, le=60000, description="Trim context to this size")
     temperature: float = Field(0.2, ge=0.0, le=2.0, description="LLM temperature")
-    stream: bool = Field(False, description="If True, Ollama streams tokens (this endpoint returns non-streamed output)")
+    stream: bool = Field(False, description="Reserved for future streaming support")
+    retrieval_mode: Literal["vector", "page_index"] = Field("vector")
+    enable_review: bool = Field(True, description="Run an LLM judge over the drafted answer")
+    max_review_rounds: int = Field(2, ge=1, le=4, description="How many retrieval+generation rounds to allow")
 
 
 class Citation(BaseModel):
     index: int
     source_file: str
-    page_start: Any
-    page_end: Any
+    page_start: int
+    page_end: int
     score: Optional[float] = None
     text_preview: str
+    document_url: str
+    viewer_url: str
+
+
+class ReviewRound(BaseModel):
+    round_number: int
+    query_used: str
+    verdict: Literal["pass", "retry", "error"]
+    relevance_score: Optional[int] = None
+    groundedness_score: Optional[int] = None
+    completeness_score: Optional[int] = None
+    rationale: str
+    rewritten_query: Optional[str] = None
+
+
+class ReviewSummary(BaseModel):
+    enabled: bool
+    final_verdict: Literal["pass", "retry", "error", "skipped"]
+    rounds: List[ReviewRound]
 
 
 class RagResponse(BaseModel):
     answer: str
     citations: List[Citation]
     used_top_k: int
+    retrieval_mode_used: Literal["vector", "page_index"]
+    review: ReviewSummary
+    final_query_used: str
 
 
 # Keep singletons
 qdrant = QdrantClient(url=QDRANT_URL)
 http = httpx.Client(timeout=DEFAULT_TIMEOUT)
+lexical_conn = connect_index(LEXICAL_DB_PATH)
+initialize_index(lexical_conn)
 
 
 # -----------------------------
-# Core functions
+# Core helpers
 # -----------------------------
 def embed_text(text: str) -> List[float]:
     r = http.post(OLLAMA_EMBED_URL, json={"model": EMBED_MODEL, "prompt": text})
@@ -99,7 +168,100 @@ def embed_text(text: str) -> List[float]:
     return data["embedding"]
 
 
-def retrieve_top_k(query: str, top_k: int):
+def call_chat_model(
+    messages: List[Dict[str, str]],
+    *,
+    model: str,
+    temperature: float = 0.0,
+) -> str:
+    payload = {
+        "model": model,
+        "messages": messages,
+        "stream": False,
+        "options": {
+            "temperature": temperature,
+        },
+    }
+    r = http.post(OLLAMA_CHAT_URL, json=payload)
+    try:
+        r.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"Ollama chat error: {e.response.text}") from e
+
+    data = r.json()
+    content = data.get("message", {}).get("content")
+    if not content:
+        raise HTTPException(status_code=502, detail=f"Ollama chat response missing message.content: {data}")
+    return content
+
+
+def call_gemini_model(
+    messages: List[Dict[str, str]],
+    *,
+    model: str,
+    temperature: float = 0.0,
+) -> str:
+    if not GOOGLE_API_KEY:
+        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY is not set for Gemini judge calls.")
+
+    prompt_parts: List[str] = []
+    for message in messages:
+        role = message.get("role", "user").upper()
+        content = message.get("content", "")
+        prompt_parts.append(f"{role}:\n{content}")
+
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": "\n\n".join(prompt_parts)
+                    }
+                ]
+            }
+        ],
+        "generationConfig": {
+            "temperature": temperature,
+        },
+    }
+
+    url = f"{GEMINI_API_URL}/{model}:generateContent?key={GOOGLE_API_KEY}"
+    r = http.post(url, json=payload, timeout=DEFAULT_TIMEOUT)
+    try:
+        r.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"Gemini API error: {e.response.text}") from e
+
+    data = r.json()
+    candidates = data.get("candidates") or []
+    if not candidates:
+        raise HTTPException(status_code=502, detail=f"Gemini response missing candidates: {data}")
+
+    parts = candidates[0].get("content", {}).get("parts", [])
+    text = "".join(part.get("text", "") for part in parts if isinstance(part, dict))
+    if not text:
+        raise HTTPException(status_code=502, detail=f"Gemini response missing text parts: {data}")
+    return text
+
+
+def normalize_vector_points(points: Any) -> List[Dict[str, Any]]:
+    normalized: List[Dict[str, Any]] = []
+    for p in points:
+        payload = p.payload or {}
+        normalized.append(
+            {
+                "source_file": payload.get("source_file", "unknown"),
+                "page_start": int(payload.get("page_start", 1)),
+                "page_end": int(payload.get("page_end", 1)),
+                "chunk_index": int(payload.get("chunk_index", 0)),
+                "text": (payload.get("text") or "").strip(),
+                "score": float(getattr(p, "score", 0.0)),
+            }
+        )
+    return normalized
+
+
+def retrieve_vector(query: str, top_k: int) -> List[Dict[str, Any]]:
     qvec = embed_text(query)
     try:
         res = qdrant.query_points(
@@ -110,28 +272,33 @@ def retrieve_top_k(query: str, top_k: int):
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Qdrant query failed: {e}") from e
+    return normalize_vector_points(res.points)
 
-    return res.points
+
+def retrieve_chunks(query: str, top_k: int, retrieval_mode: str) -> List[Dict[str, Any]]:
+    if retrieval_mode == "vector":
+        return retrieve_vector(query, top_k)
+    if retrieval_mode in {"page_index", "lexical"}:
+        return search_lexical(lexical_conn, query, limit=top_k)
+    raise HTTPException(status_code=400, detail=f"Unsupported retrieval mode: {retrieval_mode}")
 
 
-def format_context(points, max_chars: int) -> str:
+def format_context(chunks: List[Dict[str, Any]], max_chars: int) -> str:
     blocks: List[str] = []
     total = 0
 
-    for i, p in enumerate(points, start=1):
-        payload = p.payload or {}
-        text = (payload.get("text") or "").strip()
+    for i, chunk in enumerate(chunks, start=1):
+        text = (chunk.get("text") or "").strip()
         if not text:
             continue
 
-        src = payload.get("source_file", "unknown")
-        ps = payload.get("page_start", "?")
-        pe = payload.get("page_end", "?")
-        score = getattr(p, "score", None)
-
+        src = chunk.get("source_file", "unknown")
+        ps = chunk.get("page_start", "?")
+        pe = chunk.get("page_end", "?")
+        score = chunk.get("score")
         block = (
             f"[{i}] Source: {src} (pages {ps}-{pe})"
-            + (f" | score={score:.4f}" if score is not None else "")
+            + (f" | score={score:.4f}" if isinstance(score, (int, float)) else "")
             + f"\n{text}"
         )
 
@@ -147,251 +314,305 @@ def format_context(points, max_chars: int) -> str:
     return "\n\n---\n\n".join(blocks)
 
 
-def ask_llm(question: str, context: str, temperature: float) -> str:
+def ask_answer_model(question: str, context: str, temperature: float) -> str:
     system = (
-        "You are an expert legal/document assistant. Use are not limited to the provided context to answer. "
-        "If the answer is not present in the context, you need to use your existing memory(do not hallucinate ). "
-        "When you use facts, cite sources like [1], [2] based on the context blocks."
-        "You are equivalent to an lawyer who has years of practice"
-        "You need to answer the question in same language the query/question(for which you need to detect the language) was made, do not change the language of the answer. "
+        "You are an expert legal/document assistant. "
+        "Answer using the provided context first. "
+        "Cite supporting context blocks like [1], [2]. "
+        "Respond in the same language as the user's question."
+        "You cannot respond like : i dont know, cannot find similar or like this."
+        "You are an expert and you always need to answer i hope you understand."
+        "if you dont gets the required data in context you need to use your own data and give good answers."
     )
-
     user = (
         f"Context:\n{context}\n\n"
         f"Question:\n{question}\n\n"
-        "Answer clearly and include citations like [1], [2]."
+        "Write a clear answer grounded in the context. If context is missing, say so plainly."
     )
-
-    payload = {
-        "model": LLM_MODEL,
-        "messages": [
+    return call_chat_model(
+        [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
-        "stream": False,
-        "options": {
-            "temperature": temperature,
-        },
-    }
+        model=LLM_MODEL,
+        temperature=temperature,
+    )
 
-    r = http.post(OLLAMA_CHAT_URL, json=payload)
+
+def parse_json_block(text: str) -> Dict[str, Any]:
     try:
-        r.raise_for_status()
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=502, detail=f"Ollama chat error: {e.response.text}") from e
-
-    data = r.json()
-    msg = data.get("message", {})
-    content = msg.get("content")
-    if not content:
-        raise HTTPException(status_code=502, detail=f"Ollama chat response missing message.content: {data}")
-    return content
+        return json.loads(text)
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", text, flags=re.DOTALL)
+        if not match:
+            raise
+        return json.loads(match.group(0))
 
 
-def build_citations(points) -> List[Citation]:
+def judge_answer(question: str, context: str, answer: str) -> Dict[str, Any]:
+    system = (
+        "You are a loose RAG answer judge. "
+        "Return JSON only with keys: verdict, relevance_score, groundedness_score, "
+        "completeness_score, rationale. Scores must be integers from 1 to 5.(the minimum value you can return is 3.5) "
+        "Use verdict='pass' only when the answer is relevant, grounded in context, and sufficiently complete."
+    )
+    user = (
+        f"Question:\n{question}\n\n"
+        f"Context:\n{context}\n\n"
+        f"Answer:\n{answer}\n\n"
+        "Evaluate the answer."
+    )
+    raw = call_gemini_model(
+        [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        model=JUDGE_MODEL,
+        temperature=0.0,
+    )
+    result = parse_json_block(raw)
+    result.setdefault("verdict", "error")
+    result.setdefault("rationale", "Judge response did not include a rationale.")
+    return result
+
+
+def should_pass_review(result: Dict[str, Any]) -> bool:
+    try:
+        relevance = int(result.get("relevance_score", 0))
+        groundedness = int(result.get("groundedness_score", 0))
+        completeness = int(result.get("completeness_score", 0))
+    except (TypeError, ValueError):
+        return False
+    verdict = str(result.get("verdict", "")).lower()
+    return verdict == "pass" and min(relevance, groundedness, completeness) >= REVIEW_THRESHOLD
+
+
+def rewrite_query(question: str, rationale: str, previous_query: str) -> str:
+    system = (
+        "You rewrite retrieval queries for RAG. "
+        "Return only the improved search query text, with no explanation."
+    )
+    user = (
+        f"Original user question:\n{question}\n\n"
+        f"Previous retrieval query:\n{previous_query}\n\n"
+        f"Why the answer failed review:\n{rationale}\n\n"
+        "Rewrite the retrieval query so document search is more likely to find grounded evidence."
+    )
+    rewritten = call_gemini_model(
+        [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        model=REWRITE_MODEL,
+        temperature=0.1,
+    ).strip()
+    return rewritten or previous_query
+
+
+def build_document_urls(request: Request, source_file: str, page_start: int) -> Dict[str, str]:
+    base_url = str(request.base_url).rstrip("/")
+    encoded_name = quote(source_file)
+    document_url = f"{base_url}/documents/{encoded_name}"
+    viewer_url = f"{document_url}#page={page_start}"
+    return {"document_url": document_url, "viewer_url": viewer_url}
+
+
+def build_citations(chunks: List[Dict[str, Any]], request: Request) -> List[Citation]:
     out: List[Citation] = []
-    for i, p in enumerate(points, start=1):
-        payload = p.payload or {}
-        text = (payload.get("text") or "").strip()
-        src = payload.get("source_file", "unknown")
-        ps = payload.get("page_start", "?")
-        pe = payload.get("page_end", "?")
-        score = getattr(p, "score", None)
-
+    for i, chunk in enumerate(chunks, start=1):
+        text = (chunk.get("text") or "").strip()
+        src = chunk.get("source_file", "unknown")
+        ps = int(chunk.get("page_start", 1))
+        pe = int(chunk.get("page_end", ps))
+        score = chunk.get("score")
         preview = text[:240].replace("\n", " ")
+        urls = build_document_urls(request, src, ps)
         out.append(
             Citation(
                 index=i,
                 source_file=src,
                 page_start=ps,
                 page_end=pe,
-                score=score,
+                score=float(score) if isinstance(score, (int, float)) else None,
                 text_preview=preview,
+                document_url=urls["document_url"],
+                viewer_url=urls["viewer_url"],
             )
         )
     return out
+
+
+def generate_with_review(
+    question: str,
+    *,
+    top_k: int,
+    retrieval_mode: str,
+    max_context_chars: int,
+    temperature: float,
+    enable_review: bool,
+    max_review_rounds: int,
+) -> Dict[str, Any]:
+    rounds: List[ReviewRound] = []
+    query_used = question
+    final_answer = ""
+    final_chunks: List[Dict[str, Any]] = []
+    final_verdict: Literal["pass", "retry", "error", "skipped"] = "skipped"
+
+    for round_number in range(1, max_review_rounds + 1):
+        logger.info(
+            "RAG round=%s started | mode=%s | query=%r",
+            round_number,
+            retrieval_mode,
+            query_used[:180],
+        )
+        final_chunks = retrieve_chunks(query_used, top_k, retrieval_mode)
+        logger.info(
+            "RAG round=%s retrieval done | chunks=%s",
+            round_number,
+            len(final_chunks),
+        )
+        if not final_chunks:
+            final_answer = "I don't know (no relevant context retrieved)."
+            final_verdict = "error"
+            logger.warning("RAG round=%s no chunks retrieved", round_number)
+            rounds.append(
+                ReviewRound(
+                    round_number=round_number,
+                    query_used=query_used,
+                    verdict="error",
+                    rationale="No relevant chunks were retrieved for this query.",
+                )
+            )
+            break
+
+        context = format_context(final_chunks, max_chars=max_context_chars)
+        if not context.strip():
+            final_answer = "I don't know (retrieved empty context)."
+            final_verdict = "error"
+            logger.warning("RAG round=%s empty formatted context", round_number)
+            rounds.append(
+                ReviewRound(
+                    round_number=round_number,
+                    query_used=query_used,
+                    verdict="error",
+                    rationale="Retrieved context was empty after formatting.",
+                )
+            )
+            break
+
+        logger.info("RAG round=%s generating answer with main LLM", round_number)
+        final_answer = ask_answer_model(question, context, temperature=temperature)
+        if not enable_review:
+            final_verdict = "skipped"
+            logger.info("RAG review disabled | returning first-pass answer")
+            break
+
+        logger.info("RAG round=%s sending draft answer for external review", round_number)
+        try:
+            result = judge_answer(question, context, final_answer)
+        except Exception as exc:
+            final_verdict = "error"
+            logger.exception("RAG round=%s review step failed", round_number)
+            rounds.append(
+                ReviewRound(
+                    round_number=round_number,
+                    query_used=query_used,
+                    verdict="error",
+                    rationale=f"Judge step failed: {exc}",
+                )
+            )
+            break
+
+        verdict = "pass" if should_pass_review(result) else "retry"
+        rewritten_query: Optional[str] = None
+        rationale = str(result.get("rationale", "No rationale provided by judge."))
+
+        if verdict == "retry" and round_number < max_review_rounds:
+            logger.info("RAG round=%s review=retry | rewriting retrieval query", round_number)
+            rewritten_query = rewrite_query(question, rationale, query_used)
+
+        rounds.append(
+            ReviewRound(
+                round_number=round_number,
+                query_used=query_used,
+                verdict=verdict,
+                relevance_score=int(result.get("relevance_score", 0) or 0),
+                groundedness_score=int(result.get("groundedness_score", 0) or 0),
+                completeness_score=int(result.get("completeness_score", 0) or 0),
+                rationale=rationale,
+                rewritten_query=rewritten_query,
+            )
+        )
+
+        if verdict == "pass":
+            final_verdict = "pass"
+            logger.info("RAG round=%s review=pass | finishing", round_number)
+            break
+
+        final_verdict = "retry"
+        logger.info("RAG round=%s review=retry", round_number)
+        if rewritten_query:
+            query_used = rewritten_query
+
+    return {
+        "answer": final_answer,
+        "chunks": final_chunks,
+        "review": ReviewSummary(
+            enabled=enable_review,
+            final_verdict=final_verdict,
+            rounds=rounds,
+        ),
+        "final_query_used": query_used,
+    }
 
 
 # -----------------------------
 # Endpoints
 # -----------------------------
 @app.get("/health")
-def health():
-    # quick checks (lightweight)
-    return {"status": "ok", "collection": COLLECTION, "qdrant": QDRANT_URL, "ollama": "127.0.0.1:11434"}
+def health() -> Dict[str, Any]:
+    return {
+        "status": "ok",
+        "collection": COLLECTION,
+        "qdrant": QDRANT_URL,
+        "ollama": "127.0.0.1:11434",
+        "page_index_db": LEXICAL_DB_PATH,
+        "documents_dir": DATA_DIR,
+    }
 
 
 @app.post("/rag", response_model=RagResponse)
-def rag(req: RagRequest):
-    points = retrieve_top_k(req.query, req.top_k)
-    for i in points:
-        print("THE top matchings are : ",i)
-        print("")
-        print("")
-    print("")
-    print("")
-
-    if not points:
-        return RagResponse(answer="I don't know (no relevant context retrieved).", citations=[], used_top_k=0)
-
-    context = format_context(points, max_chars=req.max_context_chars)
-    if not context.strip():
-        return RagResponse(answer="I don't know (retrieved empty context).", citations=build_citations(points), used_top_k=len(points))
-
-    answer = ask_llm(req.query, context, temperature=req.temperature)
-    print(f"LLM Answer:\n{answer}\n")  # log answer for debugging
-    return RagResponse(
-        answer=answer,
-        citations=build_citations(points),
-        used_top_k=len(points),
+def rag(req: RagRequest, request: Request) -> RagResponse:
+    logger.info(
+        "Incoming /rag query | mode=%s | feedback_review=%s | top_k=%s | max_rounds=%s | query=%r",
+        req.retrieval_mode,
+        req.enable_review,
+        req.top_k,
+        req.max_review_rounds,
+        req.query[:180],
+    )
+    result = generate_with_review(
+        req.query,
+        top_k=req.top_k,
+        retrieval_mode=req.retrieval_mode,
+        max_context_chars=req.max_context_chars,
+        temperature=req.temperature,
+        enable_review=req.enable_review,
+        max_review_rounds=req.max_review_rounds,
     )
 
-# ********************** WITHOUT_FASTAPI *************************
-# from __future__ import annotations
-
-# import httpx
-# from qdrant_client import QdrantClient
-
-
-# # ---- Config ----
-# OLLAMA_CHAT_URL = "http://127.0.0.1:11434/api/chat"
-# OLLAMA_EMBED_URL = "http://127.0.0.1:11434/api/embeddings"
-
-# LLM_MODEL = "qwen2.5:7b"
-# EMBED_MODEL = "nomic-embed-text"
-
-# QDRANT_URL = "http://127.0.0.1:6333"
-# COLLECTION = "btp_docs"
-
-# TOP_K = 8  # change to 3/5/8 as you like
-
-
-# def embed_text(text: str) -> list[float]:
-#     """Create an embedding using local Ollama embedding model."""
-#     payload = {"model": EMBED_MODEL, "prompt": text}
-#     r = httpx.post(OLLAMA_EMBED_URL, json=payload, timeout=120)
-#     r.raise_for_status()
-#     return r.json()["embedding"]
-
-
-# def retrieve_top_k(qdrant: QdrantClient, query: str, top_k: int = TOP_K):
-#     """Search Qdrant for top-k similar chunks."""
-#     qvec = embed_text(query)
-#     res = qdrant.query_points(
-#         collection_name=COLLECTION,
-#         query=qvec,
-#         limit=top_k,
-#         with_payload=True,
-#     )
-#     return res.points
-
-
-# def build_context(points) -> str:
-#     """
-#     Format retrieved chunks into a context block.
-#     We include citations: filename + page range.
-#     """
-#     blocks = []
-#     for i, p in enumerate(points, start=1):
-#         payload = p.payload or {}
-#         text = (payload.get("text") or "").strip()
-#         src = payload.get("source_file", "unknown")
-#         ps = payload.get("page_start", "?")
-#         pe = payload.get("page_end", "?")
-#         score = getattr(p, "score", None)
-
-#         if not text:
-#             continue
-
-#         blocks.append(
-#             f"[{i}] Source: {src} (pages {ps}-{pe})"
-#             + (f" | score={score:.4f}" if score is not None else "")
-#             + f"\n{text}"
-#         )
-
-#     return "\n\n---\n\n".join(blocks)
-
-
-# def ask_llm(question: str, context: str) -> str:
-#     """
-#     Call Qwen with retrieved context.
-#     We instruct it to answer using only the context, and cite sources [1], [2], etc.
-#     """
-#     system = (
-#         "You are a legal/document assistant. Use ONLY the provided context to answer. "
-#         "If the answer is not present in the context, say you don't know. "
-#         "When you use facts, cite sources like [1], [2] based on the context blocks."
-#     )
-
-#     user = (
-#         f"Context:\n{context}\n\n"
-#         f"Question:\n{question}\n\n"
-#         "Answer clearly and include citations like [1], [2]."
-#     )
-
-#     payload = {
-#         "model": LLM_MODEL,
-#         "messages": [
-#             {"role": "system", "content": system},
-#             {"role": "user", "content": user},
-#         ],
-#         "stream": False,
-#     }
-
-#     r = httpx.post(OLLAMA_CHAT_URL, json=payload, timeout=180)
-#     r.raise_for_status()
-#     return r.json()["message"]["content"]
-
-
-# def main():
-#     qdrant = QdrantClient(url=QDRANT_URL)
-
-#     # Change this question to whatever you want
-#     question = "What does the Indian Constitution say about fundamental rights?"
-
-#     points = retrieve_top_k(qdrant, question, top_k=TOP_K)
-
-#     if not points:
-#         print("No relevant chunks found in Qdrant.")
-#         return
-
-#     context = build_context(points)
-
-#     print("\n--- Retrieved Context (top-k) ---\n")
-#     print(context[:4000])  # preview (avoid dumping huge text)
-
-#     answer = ask_llm(question, context)
-
-#     print("\n\n--- Final Answer (Qwen) ---\n")
-#     print(answer)
-
-
-# if __name__ == "__main__":
-#     main()
-
-
-
-#  ************************** INITIAL_MODEL ************************************
-# import httpx
-
-# OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
-
-# payload = {
-#     "model": "qwen2.5:7b",
-#     "messages": [
-#         {"role": "system", "content": "You are a helpful assistant."},
-#         {"role": "user", "content": "Explain TCP vs UDP in simple words."}
-#     ],
-#     "stream": False
-# }
-
-# try:
-#     response = httpx.post(OLLAMA_URL, json=payload, timeout=120)
-#     response.raise_for_status()
-
-#     data = response.json()
-#     print("\nModel Response:\n")
-#     print(data["message"]["content"])
-
-# except httpx.RequestError as e:
-#     print(f"Request failed: {e}")
+    citations = build_citations(result["chunks"], request)
+    logger.info(
+        "Completed /rag query | used_chunks=%s | final_verdict=%s | final_query=%r",
+        len(result["chunks"]),
+        result["review"].final_verdict,
+        result["final_query_used"][:180],
+    )
+    return RagResponse(
+        answer=result["answer"],
+        citations=citations,
+        used_top_k=len(result["chunks"]),
+        retrieval_mode_used=req.retrieval_mode,
+        review=result["review"],
+        final_query_used=result["final_query_used"],
+    )

@@ -12,6 +12,7 @@ from pypdf import PdfReader
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qm
+from lexical_index import connect_index, initialize_index, replace_source_records
 
 
 # -----------------------------
@@ -25,6 +26,7 @@ EMBED_MODEL = "nomic-embed-text"
 
 QDRANT_URL = "http://127.0.0.1:6333"
 COLLECTION = "btp_docs"
+LEXICAL_DB_PATH = "./lexical_chunks.db"
 
 # Chunking tuned for legal PDFs
 CHUNK_MAX_CHARS = 1800
@@ -278,16 +280,22 @@ def main():
         return
 
     qdrant = QdrantClient(url=QDRANT_URL)
+    lexical_conn = connect_index(LEXICAL_DB_PATH)
+    initialize_index(lexical_conn)
 
     total_chunks = 0
+    total_lexical_records = 0
     for pdf in pdfs:
         print(f"\n📄 Processing: {pdf}")
         records = build_chunks_for_pdf(pdf)
         print(f"   → extracted chunks: {len(records)}")
         upsert_records(qdrant, records)
+        total_lexical_records += replace_source_records(lexical_conn, records)
         total_chunks += len(records)
 
+    lexical_conn.close()
     print(f"\n✅ Done. Total chunks upserted into '{COLLECTION}': {total_chunks}")
+    print(f"✅ Lexical index refreshed in '{LEXICAL_DB_PATH}': {total_lexical_records} chunks")
     print("   Qdrant UI: http://localhost:6333/dashboard")
 
 

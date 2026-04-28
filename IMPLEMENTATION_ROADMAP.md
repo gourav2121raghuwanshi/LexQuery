@@ -22,7 +22,7 @@ If work resumes later, use this document first and verify each item against the 
 
 1. Add clickable PDF source navigation.
 2. Add answer review loop with retry/query rewrite.
-3. Add lexical retrieval for vectorless RAG and expose retrieval mode selection.
+3. Add pageIndex retrieval for vectorless RAG and expose retrieval mode selection.
 4. Add fine-tuning workspace, scripts, dataset format, and evaluation plotting hooks.
 
 ## Guardrails
@@ -39,9 +39,9 @@ If work resumes later, use this document first and verify each item against the 
 - Backend serves PDFs through HTTP.
 - Citation response includes a direct URL to the PDF page.
 - Frontend opens citations in a new tab.
-- `/rag` supports `retrieval_mode=vector|lexical|hybrid`.
+- `/rag` supports `retrieval_mode=vector|page_index`.
 - `/rag` can enable a review loop and returns review metadata.
-- Ingestion populates both vector storage and lexical index.
+- Ingestion populates both vector storage and the pageIndex backing index.
 - Fine-tuning folder contains:
   - dataset format documentation
   - training script scaffold

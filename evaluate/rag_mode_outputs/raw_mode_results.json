@@ -1,0 +1,962 @@
+{
+  "I have been accused of financial fraud in a business partnership; I need to understand what constitutes \"dishonest inducement\" under Indian law and want to know about similar sample cases where a commercial dispute was wrongly categorized as a criminal cheating case.": {
+    "vector": {
+      "latency_ms": 587,
+      "docs": [
+        "A2013-18.pdf|244-244",
+        "A2013-18.pdf|143-143",
+        "A2009-06.pdf|18-18",
+        "A2016-31.pdf|71-71",
+        "penal_code.pdf|103-103"
+      ],
+      "scores": [
+        0.72375405,
+        0.7216381,
+        0.721435,
+        0.71943235,
+        0.7186403
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 0.0021159500000000886,
+      "gap_top1_topk": 0.005113750000000028,
+      "context_chars": 7523,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 57,
+      "docs": [
+        "A2009-06.pdf|34-34",
+        "A2009-06.pdf|14-14",
+        "A2009-06.pdf|1-2",
+        "the_code_of_civil_procedure,_1908.pdf|176-176",
+        "2006___47.pdf|28-28"
+      ],
+      "scores": [
+        17.054027893310206,
+        16.139214026108927,
+        15.315214372457037,
+        14.02548427822968,
+        13.983749266465766
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.9148138672012784,
+      "gap_top1_topk": 3.0702786268444395,
+      "context_chars": 7591,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "A former colleague filed a defamation suit against me for a social media post; I want to know the legal \"exceptions\" for truth and public good, plus details on past cases where the High Court quashed defamation FIRs based on freedom of speech.": {
+    "vector": {
+      "latency_ms": 52,
+      "docs": [
+        "penal_code.pdf|115-115",
+        "penal_code.pdf|115-115",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|106-106",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|107-107",
+        "THE COMMERCIAL COURTS ACT, 2015.pdf|13-13"
+      ],
+      "scores": [
+        0.73568845,
+        0.7351089,
+        0.7283276,
+        0.71709615,
+        0.70784414
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.0005795500000000953,
+      "gap_top1_topk": 0.027844310000000094,
+      "context_chars": 9892,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 22,
+      "docs": [
+        "the_code_of_civil_procedure,_1908.pdf|26-26",
+        "A2007-41.pdf|4-4",
+        "penal_code.pdf|13-13",
+        "the_code_of_civil_procedure,_1908.pdf|5-5",
+        "A2016-16.pdf|20-20"
+      ],
+      "scores": [
+        16.242500576124907,
+        14.633318781643267,
+        14.293506893960178,
+        13.349414982919377,
+        13.218508239285546
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 1.609181794481641,
+      "gap_top1_topk": 3.0239923368393615,
+      "context_chars": 10351,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "As a doctor, I am being blamed for a patient's death during surgery; I need to know the specific \"gross negligence\" criteria set by the Supreme Court and similar past cases like Jacob Mathew v. State of Punjab.": {
+    "vector": {
+      "latency_ms": 47,
+      "docs": [
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|24-24",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|26-26",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|45-45",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|25-25",
+        "AFOOD.pdf|33-33"
+      ],
+      "scores": [
+        0.7552651,
+        0.7525159,
+        0.7414888,
+        0.723908,
+        0.7118124
+      ],
+      "unique_sources": 2,
+      "margin_top1_top2": 0.002749200000000007,
+      "gap_top1_topk": 0.04345270000000001,
+      "context_chars": 10393,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 25,
+      "docs": [
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|26-26",
+        "penal_code.pdf|27-27",
+        "a2009-25.pdf|5-5",
+        "a2009-25.pdf|6-6",
+        "a2009-25.pdf|5-5"
+      ],
+      "scores": [
+        17.820670817539938,
+        15.208126121364524,
+        12.648096866453887,
+        11.46562689911814,
+        11.422663794649209
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 2.612544696175414,
+      "gap_top1_topk": 6.398007022890729,
+      "context_chars": 9630,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am a suspect in a gold theft case from a residence; I want to understand the requirements for \"recovery of property\" as evidence and similar cases where the accused was acquitted due to a lack of direct eyewitnesses.": {
+    "vector": {
+      "latency_ms": 57,
+      "docs": [
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|43-43",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|141-141",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|84-84",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|143-143",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|169-169"
+      ],
+      "scores": [
+        0.79233545,
+        0.72606325,
+        0.722525,
+        0.72236097,
+        0.71892864
+      ],
+      "unique_sources": 2,
+      "margin_top1_top2": 0.0662722,
+      "gap_top1_topk": 0.07340681000000004,
+      "context_chars": 9833,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 38,
+      "docs": [
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|12-12",
+        "A2005-27.pdf|52-55",
+        "penal_code.pdf|94-94",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|72-72",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|234-235"
+      ],
+      "scores": [
+        13.868791478013277,
+        13.557223918701855,
+        13.202878878865915,
+        12.622757863916547,
+        12.365500655029711
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 0.3115675593114222,
+      "gap_top1_topk": 1.5032908229835655,
+      "context_chars": 8609,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "My wife has filed a case against my entire family for cruelty; I need to know the latest Supreme Court guidelines on preventing \"frivolous litigation\" and sample cases where family members' names were removed from the FIR.": {
+    "vector": {
+      "latency_ms": 52,
+      "docs": [
+        "the_code_of_civil_procedure,_1908.pdf|127-127",
+        "penal_code.pdf|118-118",
+        "the_code_of_civil_procedure,_1908.pdf|127-127",
+        "Indian_Constitution.pdf|353-353",
+        "A2005-43.pdf|8-8"
+      ],
+      "scores": [
+        0.693658,
+        0.68341553,
+        0.68259895,
+        0.68193066,
+        0.681128
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 0.010242470000000004,
+      "gap_top1_topk": 0.012530000000000041,
+      "context_chars": 9453,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 24,
+      "docs": [
+        "penal_code.pdf|114-114",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|40-40",
+        "THE COMMERCIAL COURTS ACT, 2015.pdf|6-6",
+        "a2016-04.pdf|6-6",
+        "the_code_of_civil_procedure,_1908.pdf|236-236"
+      ],
+      "scores": [
+        18.28919586650608,
+        17.369638519120855,
+        15.14671254537017,
+        15.14671254537017,
+        14.895102110512658
+      ],
+      "unique_sources": 5,
+      "margin_top1_top2": 0.9195573473852257,
+      "gap_top1_topk": 3.3940937559934223,
+      "context_chars": 9878,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am accused of causing a death in a street fight without intent; I want to know the legal distinction between \"knowledge\" and \"intention\" in such acts and past cases where the charge was reduced from murder to culpable homicide.": {
+    "vector": {
+      "latency_ms": 54,
+      "docs": [
+        "penal_code.pdf|74-74",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|43-43",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|9-9",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|42-42",
+        "penal_code.pdf|73-73"
+      ],
+      "scores": [
+        0.76816106,
+        0.7661549,
+        0.76543164,
+        0.7607254,
+        0.7597603
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.002006159999999979,
+      "gap_top1_topk": 0.008400759999999896,
+      "context_chars": 9020,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 35,
+      "docs": [
+        "penal_code.pdf|8-8",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|3-4",
+        "penal_code.pdf|74-74",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|180-180",
+        "penal_code.pdf|77-77"
+      ],
+      "scores": [
+        20.606190658110833,
+        20.506677271712938,
+        20.016471615988436,
+        18.755414388941727,
+        18.734367640230428
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.09951338639789498,
+      "gap_top1_topk": 1.8718230178804056,
+      "context_chars": 8921,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am accused of unauthorized access to a company\u2019s database; I need to understand the technical definitions of \"hacking\" under Section 66 and similar cases where the prosecution failed to prove the digital \"chain of custody.\"": {
+    "vector": {
+      "latency_ms": 40,
+      "docs": [
+        "engaadhaar.pdf|19-19",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|84-84",
+        "A2013-18.pdf|143-143",
+        "penal_code.pdf|111-111",
+        "a2013-23.pdf|12-12"
+      ],
+      "scores": [
+        0.729362,
+        0.69736457,
+        0.69564295,
+        0.69432783,
+        0.6920241
+      ],
+      "unique_sources": 5,
+      "margin_top1_top2": 0.03199742999999999,
+      "gap_top1_topk": 0.037337899999999924,
+      "context_chars": 9617,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 30,
+      "docs": [
+        "a2007-51.pdf|6-6",
+        "A200530.pdf|12-12",
+        "2006___47.pdf|28-28",
+        "aaa200553.pdf|15-15",
+        "A2003-36.pdf|16-16"
+      ],
+      "scores": [
+        14.359989417829736,
+        13.706093569471422,
+        13.11996912663282,
+        12.898532725465166,
+        12.72889263817443
+      ],
+      "unique_sources": 5,
+      "margin_top1_top2": 0.6538958483583137,
+      "gap_top1_topk": 1.631096779655305,
+      "context_chars": 7992,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am accused of obstructing a government official during a protest; I want to know the specific boundaries of \"lawful discharge of duty\" and sample cases where the court found the official's actions were unauthorized.": {
+    "vector": {
+      "latency_ms": 48,
+      "docs": [
+        "penal_code.pdf|6-6",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|10-10",
+        "penal_code.pdf|50-50",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|8-8",
+        "AA2010__19green.pdf|6-6"
+      ],
+      "scores": [
+        0.7261283,
+        0.71149015,
+        0.70764667,
+        0.7013175,
+        0.70055544
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.014638149999999905,
+      "gap_top1_topk": 0.02557285999999992,
+      "context_chars": 7750,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 32,
+      "docs": [
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|207-208",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|12-12",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|171-171",
+        "A2013-18.pdf|303-303",
+        "the_code_of_civil_procedure,_1908.pdf|122-122"
+      ],
+      "scores": [
+        13.650552469613242,
+        12.25099351241663,
+        11.528767513435014,
+        11.480586001534851,
+        11.463572323092992
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 1.3995589571966125,
+      "gap_top1_topk": 2.1869801465202503,
+      "context_chars": 8733,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am being blamed for the suicide of a friend following a verbal argument; I need to know what constitutes \"instigation\" in Indian law and past cases where the court ruled that mere scolding is not abetment.": {
+    "vector": {
+      "latency_ms": 49,
+      "docs": [
+        "penal_code.pdf|30-30",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|29-29",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|30-30",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|43-43",
+        "the_code_of_civil_procedure,_1908.pdf|111-111"
+      ],
+      "scores": [
+        0.75685614,
+        0.72182953,
+        0.70543927,
+        0.7046831,
+        0.70412886
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.03502660999999996,
+      "gap_top1_topk": 0.05272728000000004,
+      "context_chars": 6625,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 28,
+      "docs": [
+        "the_code_of_civil_procedure,_1908.pdf|176-176",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|3-4",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|45-45",
+        "the_code_of_civil_procedure,_1908.pdf|124-124",
+        "penal_code.pdf|8-8"
+      ],
+      "scores": [
+        12.113711628427115,
+        11.401729561919462,
+        11.393822558291713,
+        11.345546404347038,
+        11.067060843722247
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.7119820665076535,
+      "gap_top1_topk": 1.0466507847048678,
+      "context_chars": 6776,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "Police claim they found banned substances in my car; I want to know the mandatory procedures under Section 50 regarding personal search and similar cases where the accused was freed because the police didn't follow the search protocol.": {
+    "vector": {
+      "latency_ms": 58,
+      "docs": [
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|48-48",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|48-48",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|47-47",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|35-35",
+        "A2005-27.pdf|35-35"
+      ],
+      "scores": [
+        0.70694685,
+        0.70381343,
+        0.70183516,
+        0.7015921,
+        0.7005365
+      ],
+      "unique_sources": 2,
+      "margin_top1_top2": 0.0031334200000000534,
+      "gap_top1_topk": 0.006410350000000009,
+      "context_chars": 10292,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 19,
+      "docs": [
+        "the_code_of_civil_procedure,_1908.pdf|5-5",
+        "the_code_of_civil_procedure,_1908.pdf|62-62",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|232-233",
+        "penal_code.pdf|51-51",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|72-72"
+      ],
+      "scores": [
+        12.817246465624114,
+        12.639281155514034,
+        12.328336367851376,
+        12.018754750780237,
+        11.539750177091515
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 0.1779653101100802,
+      "gap_top1_topk": 1.2774962885325998,
+      "context_chars": 8541,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "A neighbor accused me of entering their land with intent to intimidate; I want to know how \"possession\" is proven in court and sample cases regarding boundary disputes that were turned into criminal trespass.": {
+    "vector": {
+      "latency_ms": 43,
+      "docs": [
+        "penal_code.pdf|106-106",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|97-97",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|97-97",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|43-43",
+        "penal_code.pdf|105-105"
+      ],
+      "scores": [
+        0.72583497,
+        0.71232444,
+        0.70385295,
+        0.69726914,
+        0.6967236
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.01351053000000002,
+      "gap_top1_topk": 0.02911136999999997,
+      "context_chars": 8697,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 26,
+      "docs": [
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|97-97",
+        "penal_code.pdf|106-106",
+        "penal_code.pdf|105-105",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|134-134",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|12-12"
+      ],
+      "scores": [
+        22.543609504064833,
+        19.034912094176967,
+        18.42202924425166,
+        12.355738983431682,
+        12.348723598727577
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 3.5086974098878656,
+      "gap_top1_topk": 10.194885905337255,
+      "context_chars": 8635,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am accused of forging a signature on a property deed; I need to know how the Forensic Science Laboratory (FSL) reports are weighed as evidence and past cases where handwriting experts' opinions were challenged.": {
+    "vector": {
+      "latency_ms": 44,
+      "docs": [
+        "penal_code.pdf|51-51",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|22-22",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|73-73",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|100-100",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|91-91"
+      ],
+      "scores": [
+        0.7671498,
+        0.7604142,
+        0.74919736,
+        0.74094015,
+        0.73230046
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.006735599999999953,
+      "gap_top1_topk": 0.03484933999999995,
+      "context_chars": 9080,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 24,
+      "docs": [
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|243-244",
+        "A2013-18.pdf|256-256",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|12-12",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|95-95",
+        "A2013-18.pdf|257-257"
+      ],
+      "scores": [
+        15.263420276131471,
+        14.783684051216582,
+        14.783600489303906,
+        14.666030890558359,
+        14.61866003977909
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.4797362249148893,
+      "gap_top1_topk": 0.644760236352381,
+      "context_chars": 8860,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I was involved in a car accident and charged with reckless driving; I want to know how \"high speed\" vs \"rashness\" is determined and similar cases where the accident was attributed to mechanical failure rather than driver fault.": {
+    "vector": {
+      "latency_ms": 53,
+      "docs": [
+        "NEW-ROAD-SIGNS.pdf|2-2",
+        "NEW-ROAD-SIGNS.pdf|2-2",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|15-15",
+        "penal_code.pdf|25-25",
+        "penal_code.pdf|75-75"
+      ],
+      "scores": [
+        0.7028179,
+        0.6742207,
+        0.6707068,
+        0.66853666,
+        0.667681
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.02859719999999999,
+      "gap_top1_topk": 0.035136900000000026,
+      "context_chars": 9845,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 28,
+      "docs": [
+        "NEW-ROAD-SIGNS.pdf|2-2",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|23-23",
+        "penal_code.pdf|25-25",
+        "NEW-ROAD-SIGNS.pdf|2-2",
+        "AA2010__19green.pdf|8-8"
+      ],
+      "scores": [
+        16.953891590792793,
+        15.754894566952562,
+        15.608430127503075,
+        13.3051955917257,
+        12.399615876397048
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 1.1989970238402314,
+      "gap_top1_topk": 4.554275714395745,
+      "context_chars": 9842,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am accused of threatening someone to pay money; I need to know the difference between a \"tough business negotiation\" and \"extortion\" and past cases where the lack of \"delivery of property\" led to an acquittal.": {
+    "vector": {
+      "latency_ms": 55,
+      "docs": [
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|88-88",
+        "penal_code.pdf|97-97",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|12-12",
+        "the_code_of_civil_procedure,_1908.pdf|176-176",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|89-89"
+      ],
+      "scores": [
+        0.73216695,
+        0.73151755,
+        0.7197551,
+        0.7183366,
+        0.71389145
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 0.0006494000000000222,
+      "gap_top1_topk": 0.0182755,
+      "context_chars": 9808,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 28,
+      "docs": [
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|95-95",
+        "the_code_of_civil_procedure,_1908.pdf|162-162",
+        "A2013-30.pdf|3-4",
+        "A2013-30.pdf|39-39",
+        "a2016-2.pdf|22-22"
+      ],
+      "scores": [
+        15.503491151383507,
+        15.313327973519725,
+        14.527976356047118,
+        12.57756581740386,
+        12.354680477455538
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 0.19016317786378245,
+      "gap_top1_topk": 3.1488106739279687,
+      "context_chars": 9491,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am accused of taking a minor away from legal guardianship; I want to understand the \"consent of the minor\" defense and similar cases involving elopement where the court quashed the kidnapping charges.": {
+    "vector": {
+      "latency_ms": 57,
+      "docs": [
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|55-55",
+        "a2016-2.pdf|15-15",
+        "a2007-06.pdf|7-7",
+        "penal_code.pdf|86-86",
+        "the_code_of_civil_procedure,_1908.pdf|124-124"
+      ],
+      "scores": [
+        0.73063415,
+        0.73051816,
+        0.72815716,
+        0.7224821,
+        0.71866375
+      ],
+      "unique_sources": 5,
+      "margin_top1_top2": 0.00011598999999995474,
+      "gap_top1_topk": 0.011970399999999937,
+      "context_chars": 9609,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 22,
+      "docs": [
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|126-126",
+        "penal_code.pdf|86-86",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|12-12",
+        "penal_code.pdf|86-86",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|99-99"
+      ],
+      "scores": [
+        19.048705701047044,
+        18.020129052800254,
+        15.480696193255769,
+        15.428936541400837,
+        14.229005421509964
+      ],
+      "unique_sources": 2,
+      "margin_top1_top2": 1.0285766482467906,
+      "gap_top1_topk": 4.819700279537081,
+      "context_chars": 9395,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "My cheque bounced due to a technical error, but I'm being sued criminally; I want to know the \"statutory notice\" requirements and past cases where the case was dismissed because the notice period was not followed.": {
+    "vector": {
+      "latency_ms": 45,
+      "docs": [
+        "the_code_of_civil_procedure,_1908.pdf|63-63",
+        "the_code_of_civil_procedure,_1908.pdf|63-63",
+        "the_code_of_civil_procedure,_1908.pdf|147-147",
+        "AFOOD.pdf|23-23",
+        "the_code_of_civil_procedure,_1908.pdf|59-59"
+      ],
+      "scores": [
+        0.7415175,
+        0.7341583,
+        0.73034126,
+        0.7237303,
+        0.71787
+      ],
+      "unique_sources": 2,
+      "margin_top1_top2": 0.00735920000000001,
+      "gap_top1_topk": 0.023647500000000043,
+      "context_chars": 9502,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 16,
+      "docs": [
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|100-100",
+        "penal_code.pdf|109-109",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|34-34",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|171-171",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|91-91"
+      ],
+      "scores": [
+        16.577991819771775,
+        16.57799180532624,
+        14.815490881372964,
+        14.36633787020258,
+        13.841346470020696
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 1.4445536322682528e-08,
+      "gap_top1_topk": 2.736645349751079,
+      "context_chars": 10201,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am accused of possessing fake currency notes; I need to know if \"knowledge of falsity\" must be proven by the police and similar cases where innocent people were acquitted for unknowingly carrying fake notes.": {
+    "vector": {
+      "latency_ms": 47,
+      "docs": [
+        "penal_code.pdf|113-113",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|14-14",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|62-62",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|17-17",
+        "penal_code.pdf|51-51"
+      ],
+      "scores": [
+        0.77705586,
+        0.776619,
+        0.7594066,
+        0.75559926,
+        0.75055444
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.0004368600000000944,
+      "gap_top1_topk": 0.026501419999999998,
+      "context_chars": 9302,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 23,
+      "docs": [
+        "penal_code.pdf|12-12",
+        "penal_code.pdf|12-12",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|7-7",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|188-188",
+        "penal_code.pdf|113-113"
+      ],
+      "scores": [
+        28.930141639240006,
+        28.39022903330824,
+        24.90526197321355,
+        23.678719721266678,
+        23.101408130945206
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 0.5399126059317645,
+      "gap_top1_topk": 5.8287335082948,
+      "context_chars": 8466,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "As an employee, I'm accused of misappropriating office funds; I want to know how \"entrustment\" is legally defined and past cases where it was proven to be a mere accounting error.": {
+    "vector": {
+      "latency_ms": 51,
+      "docs": [
+        "penal_code.pdf|100-100",
+        "201401.pdf|19-19",
+        "penal_code.pdf|101-101",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|15-15",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|92-92"
+      ],
+      "scores": [
+        0.72902286,
+        0.704571,
+        0.70424867,
+        0.70332205,
+        0.70257604
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 0.024451860000000103,
+      "gap_top1_topk": 0.026446820000000093,
+      "context_chars": 10357,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 26,
+      "docs": [
+        "A2013-18.pdf|303-303",
+        "A2013-18.pdf|300-301",
+        "a2009-12.pdf|8-8",
+        "201235.pdf|1-2",
+        "A2013-18.pdf|208-208"
+      ],
+      "scores": [
+        13.366567456946685,
+        12.161761644699075,
+        11.464964273093123,
+        11.07287134119345,
+        11.01935068266658
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 1.20480581224761,
+      "gap_top1_topk": 2.3472167742801044,
+      "context_chars": 7678,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I was arrested for being part of a crowd where violence broke out; I want to know about the \"common object\" rule and sample cases where bystanders were separated from the actual perpetrators.": {
+    "vector": {
+      "latency_ms": 54,
+      "docs": [
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|7-7",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|65-65",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|34-34",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|126-126",
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|63-63"
+      ],
+      "scores": [
+        0.7172569,
+        0.69385767,
+        0.69113314,
+        0.68436456,
+        0.6820421
+      ],
+      "unique_sources": 2,
+      "margin_top1_top2": 0.023399229999999993,
+      "gap_top1_topk": 0.03521479999999999,
+      "context_chars": 8756,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 22,
+      "docs": [
+        "THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 \u2013 ARRANGEMENT OF CLAUSES.pdf|37-37",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|19-19",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|23-23",
+        "penal_code.pdf|25-25",
+        "THE BHARATIYA SAKSHYA ADHINIYAM, 2023.pdf|34-34"
+      ],
+      "scores": [
+        15.465550807810482,
+        15.443434344394424,
+        13.596565500987813,
+        13.458209123047366,
+        13.383689055421113
+      ],
+      "unique_sources": 4,
+      "margin_top1_top2": 0.022116463416057996,
+      "gap_top1_topk": 2.0818617523893685,
+      "context_chars": 9212,
+      "answer": "",
+      "judge": null
+    }
+  },
+  "I am facing an accusation of unwelcome physical contact at a workplace; I need to know the definitions of \"sexual intent\" vs \"accidental touch\" and past cases where internal committee reports were used in criminal proceedings.": {
+    "vector": {
+      "latency_ms": 48,
+      "docs": [
+        "penal_code.pdf|83-83",
+        "A2013-14.pdf|5-5",
+        "A2013-14.pdf|12-12",
+        "A2013-14.pdf|5-5",
+        "penal_code.pdf|85-85"
+      ],
+      "scores": [
+        0.6968095,
+        0.6742507,
+        0.67291707,
+        0.66864854,
+        0.6663798
+      ],
+      "unique_sources": 2,
+      "margin_top1_top2": 0.02255879999999999,
+      "gap_top1_topk": 0.030429700000000004,
+      "context_chars": 7969,
+      "answer": "",
+      "judge": null
+    },
+    "pageIndex": {
+      "latency_ms": 23,
+      "docs": [
+        "A2013-14.pdf|5-5",
+        "penal_code.pdf|83-83",
+        "THE BHARATIYA NYAYA SANHITA, 2023.pdf|38-38",
+        "A2013-14.pdf|11-11",
+        "penal_code.pdf|83-83"
+      ],
+      "scores": [
+        30.865669047377597,
+        28.68799923122351,
+        19.46970315810726,
+        15.423320011947206,
+        15.172193118799006
+      ],
+      "unique_sources": 3,
+      "margin_top1_top2": 2.1776698161540864,
+      "gap_top1_topk": 15.693475928578591,
+      "context_chars": 8873,
+      "answer": "",
+      "judge": null
+    }
+  }
+}
