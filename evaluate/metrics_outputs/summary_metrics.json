@@ -1,0 +1,47 @@
+{
+  "per_strategy": {
+    "cosine_para": {
+      "collection": "btp_docs_cosine_para",
+      "avg_latency_ms": 8.95,
+      "avg_margin_top1_top2": 0.015633316000000008,
+      "avg_gap_top1_topk": 0.04344364750000001
+    },
+    "dot_smallchunks": {
+      "collection": "btp_docs_dot_smallchunks",
+      "avg_latency_ms": 11.25,
+      "avg_margin_top1_top2": 5.66099750000001,
+      "avg_gap_top1_topk": 18.006834500000007
+    },
+    "euclid_mergedpages": {
+      "collection": "btp_docs_euclid_mergedpages",
+      "avg_latency_ms": 7.6,
+      "avg_margin_top1_top2": 0.007054600000000022,
+      "avg_gap_top1_topk": 0.05291464999999977
+    }
+  },
+  "pairwise": {
+    "cosine_para vs dot_smallchunks": {
+      "avg_overlap_at_k": 0.445,
+      "avg_jaccard_at_k": 0.29927037616666097
+    },
+    "cosine_para vs euclid_mergedpages": {
+      "avg_overlap_at_k": 0.035,
+      "avg_jaccard_at_k": 0.01871345029239766
+    },
+    "dot_smallchunks vs euclid_mergedpages": {
+      "avg_overlap_at_k": 0.030000000000000006,
+      "avg_jaccard_at_k": 0.01608187134502924
+    }
+  },
+  "settings": {
+    "queries": "/Users/gourav/Developer/python/GenAi/BTP/evaluate/queries.txt",
+    "topk": 10,
+    "fetch": 80,
+    "outdir": "/Users/gourav/Developer/python/GenAi/BTP/evaluate/metrics_outputs"
+  },
+  "strategies": {
+    "cosine_para": "btp_docs_cosine_para",
+    "dot_smallchunks": "btp_docs_dot_smallchunks",
+    "euclid_mergedpages": "btp_docs_euclid_mergedpages"
+  }
+}

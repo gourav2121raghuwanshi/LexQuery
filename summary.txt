@@ -1,0 +1,882 @@
+BTP PROJECT SUMMARY
+===================
+
+This file explains the project end to end in a presentation-friendly way.
+It covers:
+
+1. What the project does
+2. Why it was built
+3. How each component works
+4. What is already implemented
+5. What happens during inference
+6. What happens during indexing
+7. How the feedback/review loop works
+8. How vectorless RAG works
+9. How fine-tuning works
+10. How numerical and graphical results are generated
+11. Current limitations and honest status
+
+
+----------------------------------------------------------------------
+1. PROJECT GOAL
+----------------------------------------------------------------------
+
+This project is a legal-domain RAG assistant.
+
+Main purpose:
+- User asks a legal question in the UI
+- System retrieves relevant legal content from stored documents
+- System generates an answer
+- System shows the source document and page numbers
+- User can click the source and open the PDF directly at the cited page
+- System can optionally use an LLM judge to review the answer
+
+The project is designed mainly around:
+- Indian legal / statutory / legal-book PDFs
+- Qdrant vector retrieval
+- Ollama local LLM generation
+- Gemini-based feedback/review
+- Optional vectorless pageIndex retrieval
+- Fine-tuning and evaluation support
+
+
+----------------------------------------------------------------------
+2. HIGH-LEVEL ARCHITECTURE
+----------------------------------------------------------------------
+
+Main folders/files:
+
+- create_embeddings.py
+  Builds vector embeddings and also refreshes the lexical index
+
+- build_lexical_index.py
+  Builds only the pageIndex backing index for vectorless retrieval
+
+- lexical_index.py
+  SQLite FTS5-based full-text retrieval engine
+
+- make_call_to_fine_tuned_llm.py
+  Main FastAPI backend for inference
+
+- ui/legal/src/main.js
+  Frontend chat logic
+
+- ui/legal/src/style.css
+  Frontend styling
+
+- fine_tuning/
+  Fine-tuning preparation, training, evaluation, and plotting pipeline
+
+- evaluate/
+  Retrieval strategy comparison scripts and plots
+
+
+----------------------------------------------------------------------
+3. END-TO-END SYSTEM FLOW
+----------------------------------------------------------------------
+
+ASCII FLOWCHART: FULL USER QUERY FLOW
+
+    +------------------+
+    |   User in UI     |
+    | asks a question  |
+    +--------+---------+
+             |
+             v
+    +---------------------------+
+    | Frontend sends POST /rag  |
+    | query + retrieval mode    |
+    | + review on/off           |
+    +-------------+-------------+
+                  |
+                  v
+    +---------------------------+
+    | FastAPI backend receives  |
+    | request                   |
+    +-------------+-------------+
+                  |
+                  v
+    +---------------------------+
+    | Retrieve chunks using     |
+    | one of:                   |
+    | - vector                  |
+    | - pageIndex               |
+    +-------------+-------------+
+                  |
+                  v
+    +---------------------------+
+    | Build context from        |
+    | retrieved chunks          |
+    +-------------+-------------+
+                  |
+                  v
+    +---------------------------+
+    | Generate draft answer     |
+    | using local Qwen via      |
+    | Ollama                    |
+    +-------------+-------------+
+                  |
+                  v
+      +-------------------------------+
+      | Review enabled?               |
+      +-----------+-------------------+
+                  |
+         +--------+--------+
+         |                 |
+         v                 v
+ +----------------+   +----------------------+
+ | No review      |   | Send draft answer to |
+ | return answer  |   | Gemini judge         |
+ +--------+-------+   +----------+-----------+
+          |                     |
+          |                     v
+          |           +----------------------+
+          |           | Judge scores answer  |
+          |           | relevance            |
+          |           | groundedness         |
+          |           | completeness         |
+          |           +----------+-----------+
+          |                     |
+          |                     v
+          |           +----------------------+
+          |           | Pass?                |
+          |           +-----+----------------+
+          |                 |
+          |        +--------+--------+
+          |        |                 |
+          |        v                 v
+          |  +-----------+   +----------------------+
+          |  | Return    |   | Gemini rewrites      |
+          |  | answer    |   | retrieval query      |
+          |  +-----------+   +----------+-----------+
+          |                            |
+          |                            v
+          |                  +----------------------+
+          |                  | Retrieve again and   |
+          |                  | regenerate answer    |
+          |                  +----------------------+
+          |
+          v
+    +---------------------------+
+    | Return answer + citations |
+    | + review metadata         |
+    +-------------+-------------+
+                  |
+                  v
+    +---------------------------+
+    | UI shows answer, sources, |
+    | and review rounds         |
+    +-------------+-------------+
+                  |
+                  v
+    +---------------------------+
+    | User clicks a source      |
+    | card                      |
+    +-------------+-------------+
+                  |
+                  v
+    +---------------------------+
+    | PDF opens in new tab at   |
+    | cited page                |
+    +---------------------------+
+
+
+----------------------------------------------------------------------
+4. CURRENT INFERENCE MODELS
+----------------------------------------------------------------------
+
+Current model split:
+
+- Main answer generation:
+  qwen2.5:7b
+
+- Judge / reviewer:
+  gemini-2.5-flash
+
+- Query rewriter:
+  gemini-2.5-flash
+
+Meaning:
+- Answer is generated locally with Ollama + Qwen
+- Review is done using Gemini
+- Query rewrite after failed review is also done using Gemini
+
+
+----------------------------------------------------------------------
+5. HOW DOCUMENT INGESTION WORKS
+----------------------------------------------------------------------
+
+When preparing the knowledge base, the project reads PDFs from the data folder.
+
+Source folder:
+- data/*.pdf
+
+Main steps during indexing:
+
+1. Read each PDF
+2. Extract text page by page
+3. Clean whitespace
+4. Split content into chunks
+5. Preserve metadata:
+   - source file
+   - page start
+   - page end
+   - chunk index
+6. Build vector embeddings using Ollama embeddings model
+7. Store vectors in Qdrant
+8. Store text chunks in a SQLite FTS5 pageIndex backing index
+
+ASCII FLOWCHART: INDEXING FLOW
+
+    +-------------------+
+    | PDFs in /data     |
+    +---------+---------+
+              |
+              v
+    +-------------------+
+    | Extract page text |
+    +---------+---------+
+              |
+              v
+    +-------------------+
+    | Clean text        |
+    +---------+---------+
+              |
+              v
+    +-------------------+
+    | Chunk text        |
+    | with page ranges  |
+    +---------+---------+
+              |
+              +--------------------+
+              |                    |
+              v                    v
+    +-------------------+  +---------------------+
+    | Create embeddings |  | Insert into page    |
+    | via Ollama        |  | SQLite FTS index    |
+    +---------+---------+  +----------+----------+
+              |                       |
+              v                       v
+    +-------------------+   +--------------------+
+    | Store in Qdrant   |   | lexical_chunks.db  |
+    +-------------------+   +--------------------+
+
+
+----------------------------------------------------------------------
+6. RETRIEVAL MODES
+----------------------------------------------------------------------
+
+The system supports 2 retrieval modes:
+
+1. VECTOR
+- Uses embeddings
+- Query is embedded
+- Qdrant similarity search returns top chunks
+
+2. PAGEINDEX
+- Uses keyword/full-text matching only
+- No embeddings are needed
+- Uses SQLite FTS5
+
+Why this matters:
+- Vector retrieval helps semantic matching
+- pageIndex retrieval helps exact term matching and page-based traceability
+
+
+----------------------------------------------------------------------
+7. VECTORLESS RAG
+----------------------------------------------------------------------
+
+Vectorless RAG means the system can retrieve context without using embeddings.
+
+Implemented using:
+- lexical_index.py
+- build_lexical_index.py
+- SQLite FTS5
+
+What happens:
+- User query is matched against indexed chunk text
+- Matching chunks are returned
+- Context is built from those chunks
+- Qwen generates the answer from that context
+
+Why it is useful:
+- cheaper than embedding-based retrieval
+- useful when semantic embedding infrastructure is not available
+- good for exact legal terms, sections, names, and keywords
+
+Limitations:
+- weaker than vector retrieval for paraphrased questions
+- may miss semantically relevant but differently worded content
+
+
+----------------------------------------------------------------------
+8. CONTEXT BUILDING
+----------------------------------------------------------------------
+
+After retrieval, the backend formats the retrieved chunks into context blocks.
+
+Each block contains:
+- source file name
+- page range
+- score
+- chunk text
+
+The answer model receives:
+- user question
+- context blocks
+
+The model is instructed to:
+- answer clearly
+- stay grounded in context
+- cite the context blocks like [1], [2]
+- respond in the same language as the user if possible
+
+
+----------------------------------------------------------------------
+9. FEEDBACK / REVIEW LOOP
+----------------------------------------------------------------------
+
+This is one of the key advanced features of the project.
+
+What it does:
+- Does not trust the first generated answer blindly
+- Uses a second model to judge whether the answer is good enough
+
+Judge inputs:
+- original user question
+- retrieved context
+- draft answer
+
+Judge outputs:
+- verdict
+- relevance_score
+- groundedness_score
+- completeness_score
+- rationale
+
+If answer is weak:
+- Gemini rewrites the retrieval query
+- system retrieves again
+- system generates another answer
+- judge checks again
+
+This continues for a limited number of rounds.
+
+ASCII FLOWCHART: REVIEW LOOP
+
+    +-------------------+
+    | Retrieve context  |
+    +---------+---------+
+              |
+              v
+    +-------------------+
+    | Qwen draft answer |
+    +---------+---------+
+              |
+              v
+    +-------------------+
+    | Gemini judge      |
+    | scores draft      |
+    +---------+---------+
+              |
+      +-------+-------+
+      |               |
+      v               v
+ +----------+   +------------------+
+ | PASS     |   | FAIL             |
+ | return   |   | Gemini rewrites  |
+ | answer   |   | query            |
+ +----------+   +--------+---------+
+                         |
+                         v
+               +--------------------+
+               | retrieve again     |
+               | regenerate answer  |
+               +--------------------+
+
+Why this matters for presentation:
+- It makes the system more reliable than plain single-pass RAG
+- It shows an "LLM evaluating another LLM" design
+- It is inspired by recursive/self-correcting RAG ideas
+
+
+----------------------------------------------------------------------
+10. SOURCE CITATION + CLICKABLE PDF READING
+----------------------------------------------------------------------
+
+The system already stored:
+- source file
+- page_start
+- page_end
+
+We extended this so the backend now also builds:
+- document_url
+- viewer_url
+
+viewer_url format:
+- /documents/<pdf-name>#page=<page-number>
+
+What user sees:
+- answer
+- sources
+- page ranges
+- source preview text
+
+What happens on click:
+- UI opens the PDF in a new browser tab
+- the browser jumps to the cited page
+
+Why this matters:
+- makes the system demonstrably grounded
+- lets the user verify answer against source
+- presentation-wise, it proves traceability
+
+Honest limit:
+- page-level navigation works
+- exact sentence highlighting is not implemented
+
+
+----------------------------------------------------------------------
+11. FRONTEND FLOW
+----------------------------------------------------------------------
+
+Frontend shows:
+- chat area
+- query input
+- retrieval mode selector
+- review loop toggle
+- source cards
+- review panel
+
+Frontend request contains:
+- query
+- top_k
+- temperature
+- retrieval_mode
+- enable_review
+- max_review_rounds
+
+Frontend response rendering includes:
+- answer text
+- citations
+- review rounds and scores
+
+
+----------------------------------------------------------------------
+12. BACKEND API FLOW
+----------------------------------------------------------------------
+
+Main endpoint:
+- POST /rag
+
+Health endpoint:
+- GET /health
+
+Static PDF serving:
+- /documents/<file>
+
+The /rag response returns:
+- answer
+- citations
+- used_top_k
+- retrieval_mode_used
+- review summary
+- final query used
+
+
+----------------------------------------------------------------------
+13. FINE-TUNING PURPOSE
+----------------------------------------------------------------------
+
+Why fine-tuning is added:
+- To make the model behave more like a legal assistant
+- To improve legal-domain language style
+- To potentially improve answer structure and user-facing quality
+
+Important distinction:
+- RAG gives grounded document knowledge
+- Fine-tuning gives domain behavior/style
+
+So fine-tuning should complement RAG, not replace RAG.
+
+
+----------------------------------------------------------------------
+14. FINE-TUNING PIPELINE
+----------------------------------------------------------------------
+
+Fine-tuning folder:
+- fine_tuning/
+
+Files:
+- prepare_sft_dataset.py
+- train_lora.py
+- evaluate_models.py
+- plot_finetune_results.py
+
+What happens:
+
+STEP 1: PREPARE DATASET
+- Load local JSONL or Hugging Face dataset
+- Parse chat turns or QA format
+- Convert to:
+  - prompt
+  - completion
+- Split into:
+  - train_sft.jsonl
+  - eval_sft.jsonl
+
+Supported chat sources:
+- Hugging Face conversation datasets
+- Gemma-style turn format
+- INST-style turn format
+
+STEP 2: TRAIN MODEL
+- Load base model from Hugging Face
+- Quantize model to 4-bit
+- Attach LoRA adapters
+- Train only the adapters
+
+This is QLoRA-style training because:
+- base model is quantized to 4-bit
+- LoRA adapters are trained on top
+
+STEP 3: SAVE ADAPTER
+- Adapter is stored in output folder
+- Base model is not fully rewritten
+
+ASCII FLOWCHART: FINE-TUNING FLOW
+
+    +----------------------+
+    | Raw training source  |
+    | HF dataset / JSONL   |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | prepare_sft_dataset  |
+    | creates prompt/      |
+    | completion pairs     |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | train_sft.jsonl      |
+    | eval_sft.jsonl       |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | QLoRA training       |
+    | base model + LoRA    |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | trained adapter      |
+    +----------------------+
+
+
+----------------------------------------------------------------------
+15. BASE MODEL CHOICE FOR FINE-TUNING
+----------------------------------------------------------------------
+
+Since project inference uses Qwen, fine-tuning should ideally stay in Qwen family.
+
+Good choices:
+- Qwen/Qwen2.5-3B-Instruct
+- Qwen/Qwen2.5-7B-Instruct
+
+Why:
+- keeps training family aligned with inference family
+- reduces mismatch between tuned behavior and production behavior
+
+Why not randomly switch to Gemma:
+- even if a dataset is Gemma-style formatted, the base model should match project goals
+- family consistency matters more than dataset token marker style
+
+
+----------------------------------------------------------------------
+16. WHAT HAPPENS AFTER FINE-TUNING
+----------------------------------------------------------------------
+
+After training:
+- you get a trained adapter
+- you do NOT automatically get a production-ready Ollama model
+
+Meaning:
+- training succeeds
+- adapter is saved
+- but there is still a bridge needed to serve/use the tuned model as an actual candidate model
+
+So there are 3 conceptual stages:
+
+1. Prepare training data
+2. Train adapter
+3. Serve or merge the tuned model for evaluation/inference
+
+
+----------------------------------------------------------------------
+17. RESULTS GENERATION: NUMERICAL + GRAPHICAL
+----------------------------------------------------------------------
+
+There are 2 result-generation tracks in this project.
+
+TRACK A: RETRIEVAL RESULTS
+- compare retrieval strategies
+- generate plots
+
+TRACK B: FINE-TUNING RESULTS
+- compare baseline model vs tuned model
+- generate plots
+
+
+----------------------------------------------------------------------
+18. RETRIEVAL RESULTS PIPELINE
+----------------------------------------------------------------------
+
+Files used:
+- evaluate/compare_from_qdrant.py
+- evaluate/visualize_metrics.py
+
+What compare_from_qdrant.py does:
+- runs retrieval queries against different Qdrant collections
+- measures:
+  - latency
+  - margin top1-top2
+  - gap top1-topK
+  - overlap between retrieved docs
+  - jaccard between retrieved docs
+
+Outputs:
+- raw_results.json
+- summary_metrics.json
+- results_flat.csv
+
+What visualize_metrics.py does:
+- reads those outputs
+- creates graphs
+
+Generated plots:
+- latency boxplot
+- margin boxplot
+- gap boxplot
+- overlap heatmap
+- jaccard heatmap
+- top1 agreement chart
+- average latency bar chart
+- average margin bar chart
+- average gap bar chart
+
+ASCII FLOWCHART: RETRIEVAL RESULTS
+
+    +----------------------+
+    | queries.txt          |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | compare_from_qdrant  |
+    | runs query sets on   |
+    | multiple collections |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | raw_results.json     |
+    | summary_metrics.json |
+    | results_flat.csv     |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | visualize_metrics    |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | PNG plots            |
+    +----------------------+
+
+
+----------------------------------------------------------------------
+19. FINE-TUNING RESULTS PIPELINE
+----------------------------------------------------------------------
+
+Files used:
+- fine_tuning/evaluate_models.py
+- fine_tuning/plot_finetune_results.py
+
+What evaluate_models.py does:
+- loads evaluation set
+- runs baseline model
+- runs candidate model
+- uses a judge model to score answers
+
+Metrics produced:
+- relevance
+- faithfulness
+- correctness
+
+Output:
+- eval_report.json
+
+What plot_finetune_results.py does:
+- reads eval_report.json
+- generates score comparison plots
+- generates summary markdown
+
+Generated files:
+- baseline_vs_candidate_scores.png
+- score_improvements.png
+- summary.md
+
+ASCII FLOWCHART: FINE-TUNING RESULTS
+
+    +----------------------+
+    | eval dataset         |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | baseline model       |
+    | candidate model      |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | evaluate_models.py   |
+    | scores outputs       |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | eval_report.json     |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | plot_finetune_       |
+    | results.py           |
+    +----------+-----------+
+               |
+               v
+    +----------------------+
+    | improvement graphs   |
+    | + summary.md         |
+    +----------------------+
+
+
+----------------------------------------------------------------------
+20. WHAT IS ALREADY IMPLEMENTED VS WHAT IS CONDITIONAL
+----------------------------------------------------------------------
+
+Already implemented and present in code:
+
+- PDF-to-page clickable citations
+- vector retrieval
+- pageIndex retrieval
+- Gemini judge loop
+- query rewriting in review loop
+- UI review display
+- indexing pipeline for vector + pageIndex
+- fine-tuning data prep pipeline
+- QLoRA-style training script
+- retrieval metrics and plotting scripts
+- fine-tuning evaluation and plotting scripts
+- roadmap / project memory file
+
+Implemented but depends on runtime setup:
+
+- actual Hugging Face dataset download
+- actual fine-tuning run
+- actual production use of tuned adapter
+- actual numerical improvement graphs after training/evaluation
+
+
+----------------------------------------------------------------------
+21. HONEST LIMITATIONS
+----------------------------------------------------------------------
+
+These are important to mention in a presentation honestly.
+
+1. PDF deep-linking is page-level, not sentence-level
+2. Judge loop improves reliability but does not guarantee perfect answers
+3. Lexical retrieval may miss semantic matches
+4. Fine-tuning currently saves an adapter; serving/merging is still a separate deployment step
+5. Final fine-tuning improvement plots require:
+   - baseline model access
+   - candidate tuned model access
+   - evaluation dataset
+   - successful evaluation run
+
+
+----------------------------------------------------------------------
+22. STRONG PRESENTATION STORYLINE
+----------------------------------------------------------------------
+
+A good way to present this project:
+
+1. Problem
+- Legal questions require grounded, traceable answers
+- Normal LLM answers may hallucinate
+
+2. Solution
+- Build a legal RAG assistant over legal PDFs
+- return answer with source and page number
+
+3. Improvement 1
+- clickable citation-to-PDF navigation
+
+4. Improvement 2
+- judge/review loop using Gemini
+
+5. Improvement 3
+- vectorless pageIndex retrieval support
+
+6. Improvement 4
+- QLoRA-style fine-tuning pipeline for legal assistant behavior
+
+7. Evaluation
+- retrieval strategy graphs
+- baseline vs tuned model graphs
+
+8. Trustworthiness
+- answer + source + review loop + document opening
+
+
+----------------------------------------------------------------------
+23. SIMPLE ONE-LINE PROJECT DESCRIPTION
+----------------------------------------------------------------------
+
+This project is a legal RAG assistant that answers user queries from legal PDFs, shows clickable source citations with page numbers, supports vector and pageIndex retrieval, uses Gemini to review and improve answers, and includes a QLoRA-style fine-tuning and evaluation pipeline for measurable improvement.
+
+
+----------------------------------------------------------------------
+24. IF ASKED "WHAT MAKES THIS PROJECT SPECIAL?"
+----------------------------------------------------------------------
+
+You can answer:
+
+- It is not just a chatbot; it is a grounded legal assistant
+- It provides traceable answers with page-linked citations
+- It supports both vector and vectorless retrieval
+- It uses one LLM to generate and another to evaluate
+- It includes a path to quantitative evaluation and fine-tuning
+
+
+----------------------------------------------------------------------
+25. FINAL TAKEAWAY
+----------------------------------------------------------------------
+
+The project combines:
+- document retrieval
+- answer generation
+- answer verification
+- source traceability
+- optional fine-tuning
+- measurable evaluation
+
+This makes it strong for both:
+- practical demo
+- academic/project presentation

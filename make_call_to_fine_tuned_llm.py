@@ -15,8 +15,11 @@ import json
 import logging
 import os
 import re
+import threading
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
 from urllib.parse import quote
+from uuid import uuid4
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
@@ -35,6 +38,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 LEXICAL_DB_PATH = os.path.join(BASE_DIR, "lexical_chunks.db")
 ENV_PATH = os.path.join(BASE_DIR, ".env")
+QUERY_HISTORY_PATH = os.path.join(BASE_DIR, "query_history.json")
 
 
 def load_env_file(path: str) -> None:
@@ -81,6 +85,7 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
 logger = logging.getLogger("rag.api")
+history_lock = threading.Lock()
 
 
 # -----------------------------
@@ -138,12 +143,18 @@ class ReviewSummary(BaseModel):
 
 
 class RagResponse(BaseModel):
+    interaction_id: str
     answer: str
     citations: List[Citation]
     used_top_k: int
     retrieval_mode_used: Literal["vector", "page_index"]
     review: ReviewSummary
     final_query_used: str
+
+
+class FeedbackRequest(BaseModel):
+    interaction_id: str = Field(..., min_length=1)
+    user_rating: int = Field(..., ge=1, le=5)
 
 
 # Keep singletons
@@ -442,6 +453,44 @@ def build_citations(chunks: List[Dict[str, Any]], request: Request) -> List[Cita
     return out
 
 
+def _read_history() -> List[Dict[str, Any]]:
+    if not os.path.exists(QUERY_HISTORY_PATH):
+        return []
+    try:
+        with open(QUERY_HISTORY_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return []
+    return data if isinstance(data, list) else []
+
+
+def _write_history(items: List[Dict[str, Any]]) -> None:
+    with open(QUERY_HISTORY_PATH, "w", encoding="utf-8") as f:
+        json.dump(items, f, ensure_ascii=False, indent=2)
+
+
+def append_history_entry(entry: Dict[str, Any]) -> None:
+    with history_lock:
+        items = _read_history()
+        items.append(entry)
+        _write_history(items)
+
+
+def update_history_rating(interaction_id: str, user_rating: int) -> bool:
+    with history_lock:
+        items = _read_history()
+        updated = False
+        for item in items:
+            if item.get("interaction_id") == interaction_id:
+                item["user_rating"] = user_rating
+                item["rating_updated_at"] = datetime.now(timezone.utc).isoformat()
+                updated = True
+                break
+        if updated:
+            _write_history(items)
+        return updated
+
+
 def generate_with_review(
     question: str,
     *,
@@ -602,6 +651,21 @@ def rag(req: RagRequest, request: Request) -> RagResponse:
     )
 
     citations = build_citations(result["chunks"], request)
+    interaction_id = str(uuid4())
+    append_history_entry(
+        {
+            "interaction_id": interaction_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "query": req.query,
+            "answer": result["answer"],
+            "citations": [citation.model_dump() for citation in citations],
+            "used_top_k": len(result["chunks"]),
+            "retrieval_mode_used": req.retrieval_mode,
+            "review": result["review"].model_dump(),
+            "final_query_used": result["final_query_used"],
+            "user_rating": None,
+        }
+    )
     logger.info(
         "Completed /rag query | used_chunks=%s | final_verdict=%s | final_query=%r",
         len(result["chunks"]),
@@ -609,6 +673,7 @@ def rag(req: RagRequest, request: Request) -> RagResponse:
         result["final_query_used"][:180],
     )
     return RagResponse(
+        interaction_id=interaction_id,
         answer=result["answer"],
         citations=citations,
         used_top_k=len(result["chunks"]),
@@ -616,3 +681,12 @@ def rag(req: RagRequest, request: Request) -> RagResponse:
         review=result["review"],
         final_query_used=result["final_query_used"],
     )
+
+
+@app.post("/feedback")
+def save_feedback(req: FeedbackRequest) -> Dict[str, Any]:
+    saved = update_history_rating(req.interaction_id, req.user_rating)
+    if not saved:
+        raise HTTPException(status_code=404, detail="interaction_id not found")
+    logger.info("Saved feedback | interaction_id=%s | user_rating=%s", req.interaction_id, req.user_rating)
+    return {"status": "ok", "interaction_id": req.interaction_id, "user_rating": req.user_rating}

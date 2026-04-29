@@ -1,6 +1,7 @@
 import './style.css'
 
 const API_URL = "http://127.0.0.1:8000/rag"
+const FEEDBACK_URL = "http://127.0.0.1:8000/feedback"
 
 document.querySelector('#app').innerHTML = `
   <div class="page">
@@ -105,6 +106,63 @@ function addMessage(role, content, citations = [], meta = {}) {
     bubble.appendChild(reviewWrap)
   }
 
+  if (role === "assistant" && meta.interactionId) {
+    const feedbackWrap = document.createElement("div")
+    feedbackWrap.className = "review-card"
+    feedbackWrap.innerHTML = `
+      <div class="review-line">
+        <strong>Rate this answer (1-5)</strong>
+      </div>
+      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+        <select class="rating-select">
+          <option value="">Select</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <button class="rating-save">Save Rating</button>
+        <span class="review-small rating-status"></span>
+      </div>
+    `
+
+    const selectEl = feedbackWrap.querySelector(".rating-select")
+    const saveBtnEl = feedbackWrap.querySelector(".rating-save")
+    const statusEl = feedbackWrap.querySelector(".rating-status")
+
+    saveBtnEl.addEventListener("click", async () => {
+      const value = Number(selectEl.value)
+      if (!value) {
+        statusEl.textContent = "Please select 1 to 5."
+        return
+      }
+      saveBtnEl.disabled = true
+      statusEl.textContent = "Saving..."
+      try {
+        const res = await fetch(FEEDBACK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            interaction_id: meta.interactionId,
+            user_rating: value
+          })
+        })
+        if (!res.ok) {
+          throw new Error(`Feedback API Error ${res.status}`)
+        }
+        statusEl.textContent = "Saved."
+        selectEl.disabled = true
+      } catch (err) {
+        statusEl.textContent = "Save failed."
+        saveBtnEl.disabled = false
+        console.error(err)
+      }
+    })
+
+    bubble.appendChild(feedbackWrap)
+  }
+
   if (role === "assistant" && Array.isArray(citations) && citations.length > 0) {
     const citeTitle = document.createElement("div")
     citeTitle.className = "cite-title"
@@ -172,7 +230,8 @@ async function sendMessage() {
 
     addMessage("assistant", data.answer, data.citations || [], {
       review: data.review,
-      finalQueryUsed: data.final_query_used
+      finalQueryUsed: data.final_query_used,
+      interactionId: data.interaction_id
     })
   } catch (err) {
     chatEl.lastChild?.remove()
