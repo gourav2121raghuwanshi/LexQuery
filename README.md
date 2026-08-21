@@ -1,4 +1,4 @@
-LexQuery
+##LexQuery
 
 LexQuery is a legal-domain Retrieval-Augmented Generation (RAG) system for querying a collection of legal and statutory documents.
 
